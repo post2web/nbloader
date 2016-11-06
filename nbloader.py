@@ -65,7 +65,7 @@ class Notebook(object):
             cells = self.nb_cells[cell_header]
         else:
             if cell_header in self.nb_cells:
-                cells = self.nb_cells['cell_header']
+                cells = self.nb_cells[cell_header]
             else:
                 cells = []
         self._run(cells)

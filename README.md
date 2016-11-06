@@ -1,6 +1,6 @@
 # nbloader
 
-nbloader contains a set of tools designed to help you reuse code in Jupyter notebook cells.
+nbloader contains a set of tools designed to help you reuse code from Jupyter notebook cells.
 
 To install/upgrade:
 >pip install git+git://github.com/post2web/nbloader.git@master --upgrade
