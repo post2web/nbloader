@@ -55,8 +55,8 @@ assert nb['a'] == 10
 
 Other useful features:
 - multiple cells could have the same header name.
-- header named __init will be executed when instance of Notebook class is created
-- header named __del will be executed when instance of Notebook class is deleted
+- header named \_\_init\_\_ will be executed when instance of Notebook class is created
+- header named \_\_del\_\_ will be executed when instance of Notebook class is deleted
 - handles magic commands
 - executed notebook can change working directory without affecting parent notebook
 - uses relative ( ../../test.ipynb ) or full paths ( /users/notebooks/test.ipynb ) 
