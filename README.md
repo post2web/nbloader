@@ -1,4 +1,4 @@
-# nbloader
+# nbloader: Run notebook cells as functions
 
 nbloader contains a set of tools designed to help you reuse code from Jupyter notebook cells. Tested to work with python 2.7
 
