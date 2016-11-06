@@ -1,6 +1,6 @@
 # nbloader
 
-nbloader contains a set of tools designed to help you reuse code from Jupyter notebook cells.
+nbloader contains a set of tools designed to help you reuse code from Jupyter notebook cells. Tested to work with python 2.7
 
 To install/upgrade:
 >pip install git+git://github.com/post2web/nbloader.git@master --upgrade
@@ -53,6 +53,28 @@ nb.calculate()
 assert nb['a'] == 10
 ```
 
+There are situations where you want to stop execution in return fasion.
+
+```sh
+#@exec
+from nbloader import exit
+if True:
+	exit()
+print 'I am in cell 1' 
+```
+Then you could have a second cell with the same name:
+```sh
+#@exec
+print 'I am in cell 2'
+```
+
+In main.ipynb
+```sh
+Notebook('example.ipynb').exec()
+# nothing will be printed.
+```
+
+
 Other useful features:
 - multiple cells could have the same header name.
 - header named \_\_init\_\_ will be executed when instance of Notebook class is created
@@ -64,4 +86,3 @@ Other useful features:
 - all code is completed so Notebook methods can be called in a loop without any overhead
 
 Best practices coming soon!
-Enjoy!

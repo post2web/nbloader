@@ -2,11 +2,16 @@ import os
 import io
 import pdb
 
-
 from nbformat import reader, converter, current_nbformat
 from IPython.core.interactiveshell import InteractiveShell
 from IPython import get_ipython
 from IPython.core.compilerop import CachingCompiler
+
+class Exit(Exception):
+    pass
+
+def exit():
+    raise Exit
 
 class Notebook(object):
     
@@ -52,12 +57,16 @@ class Notebook(object):
         nb_dirname = os.path.dirname(self.nb_path)
         if nb_dirname: os.chdir(nb_dirname)
         for cell in cells:
-            exec(cell, self.ns)
+            try:
+                exec(cell, self.ns)
+            except Exit, e:
+                break
         os.chdir(cwd)
     
     def run(self, cell_header=None, strict=True):
         if strict:
-            assert cell_header in self.nb_cells.keys()
+            msg = cell_header, 'not found in', self.nb_path
+            assert cell_header in self.nb_cells.keys(), msg
             cells = self.nb_cells[cell_header]
         else:
             if cell_header in self.nb_cells:
