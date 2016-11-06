@@ -53,13 +53,13 @@ nb.calculate()
 assert nb['a'] == 10
 ```
 
-There are situations where you want to stop execution in return fasion.
+There are situations where you want to stop execution with return like notation. Raise nbloader.Exit for that.
 
 ```sh
 #@exec
-from nbloader import exit
+from nbloader import Exit
 if True:
-	exit()
+	raise Exit
 print 'I am in cell 1' 
 ```
 Then you could have a second cell with the same name:

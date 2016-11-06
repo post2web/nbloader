@@ -10,9 +10,6 @@ from IPython.core.compilerop import CachingCompiler
 class Exit(Exception):
     pass
 
-def exit():
-    raise Exit
-
 class Notebook(object):
     
     def __init__(self, nb_path, ns={}):
