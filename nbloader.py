@@ -54,10 +54,6 @@ class Notebook(object):
         for cell in cells:
             exec(cell, self.ns)
         os.chdir(cwd)
-
-    def run_all(self):
-        self._run(self.nb_cells)
-        return self
     
     def run(self, cell_header=None, strict=True):
         if strict:
@@ -67,7 +63,7 @@ class Notebook(object):
             if cell_header in self.nb_cells:
                 cells = self.nb_cells[cell_header]
             else:
-                cells = []
+                return self
         self._run(cells)
         return self
         
