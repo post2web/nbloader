@@ -56,7 +56,7 @@ class Notebook(object):
         for cell in cells:
             try:
                 exec(cell, self.ns)
-            except Exit, e:
+            except Exit as e:
                 break
         os.chdir(cwd)
     
