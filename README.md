@@ -1,5 +1,4 @@
-# nbloader: Treat jupyter notebooks as objects
-## Reuse code from Jupyter notebooks.
+# nbloader: Treat Jupyter Notebooks as regular objects
 
 To install/upgrade:
 >pip install git+git://github.com/post2web/nbloader.git@master --upgrade
@@ -33,16 +32,13 @@ print(notebook.ns['a']) # 1
 ```
 
 
-The notebook variable is just a python object. It uses the same process and you can pass large variables to the notebook without an overhead.
+The notebook variable is just a python object that holds the code of the Jupyter Notebook within its name space. It uses the same process as the main program so there is no need of a jupyter server, you can pass large variables to the notebook.ns and call cells in a loop without an overhead.
 
 
 Other useful features:
 - notebooks can be executed within global name space 
-```sh
-notebook = Notebook('test.ipynb', ns=globals())
-```
+``` notebook = Notebook('test.ipynb', ns=globals()) ```
 - the notebooks can be pickled
-- all code is completed so notebook cells can be called in a loop without any overhead.
 - multiple cells could have the same tag name.
 - cells taged with \_\_init\_\_ will be executed when instance of Notebook class is created
 - cells taged with  \_\_del\_\_ will be executed when instance of Notebook class is deleted
