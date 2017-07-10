@@ -1,4 +1,5 @@
-# nbloader: Treat Jupyter Notebooks as regular objects
+# nbloader: Load Jupyter Notebooks as python objects
+## Useful for reusing code from Jupyter Notebooks
 
 To install/upgrade:
 >pip install git+git://github.com/post2web/nbloader.git@master --upgrade
