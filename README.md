@@ -3,7 +3,7 @@
 ### Execute notebook cells programmatically and interact with their namespace.
 
 To install/upgrade:
->pip install git+git://github.com/post2web/nbloader.git@master --upgrade
+>pip install nbloader --upgrade
 
 To run all cells from a notebook [test_notebook.ipynb](tests/test_notebook.ipynb):
 ```sh

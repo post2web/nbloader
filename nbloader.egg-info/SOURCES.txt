@@ -1,0 +1,8 @@
+nbloader.py
+setup.cfg
+setup.py
+nbloader.egg-info/PKG-INFO
+nbloader.egg-info/SOURCES.txt
+nbloader.egg-info/dependency_links.txt
+nbloader.egg-info/requires.txt
+nbloader.egg-info/top_level.txt

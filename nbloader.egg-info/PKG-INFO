@@ -1,0 +1,23 @@
+Metadata-Version: 1.1
+Name: nbloader
+Version: 1.0.3
+Summary: Reuse code from Jupyter Notebooks
+Home-page: https://github.com/post2we/nbloader
+Author: Ivelin Angelov
+Author-email: post2web@gmail.com
+License: MIT
+Download-URL: https://github.com/post2web/nbloader/archive/1.0.3.tar.gz
+Description: UNKNOWN
+Keywords: jupyter notebook,jupyter,notebook,reuse notebook
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
