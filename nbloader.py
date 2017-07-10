@@ -1,6 +1,5 @@
 import os
 import io
-import pdb
 
 from nbformat import reader, converter, current_nbformat
 from IPython.core.interactiveshell import InteractiveShell

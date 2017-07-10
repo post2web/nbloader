@@ -1,5 +1,6 @@
 # nbloader: Load Jupyter Notebooks as python objects
-## Useful for reusing code from Jupyter Notebooks
+### Useful for reusing code from Jupyter Notebooks. 
+### Execute notebook cells programmatically and interact with their namespace.
 
 To install/upgrade:
 >pip install git+git://github.com/post2web/nbloader.git@master --upgrade
@@ -11,7 +12,7 @@ notebook = Notebook('test_notebook.ipynb')
 notebook.run_all()
 print(notebook.ns['b']) # prints out 10
 ```
-The Notebook object has its own name space: notebook.ns
+The Notebook object has its own namespace: notebook.ns
 
 
 You can run individual cells using cell tags. 
@@ -37,7 +38,7 @@ The notebook variable is just a python object that holds the code of the Jupyter
 
 
 Other useful features:
-- notebooks can be executed within global name space 
+- notebooks can be executed within global namespace
 ``` notebook = Notebook('test.ipynb', ns=globals()) ```
 - the notebooks can be pickled
 - multiple cells could have the same tag name.
