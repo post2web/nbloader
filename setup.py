@@ -19,6 +19,7 @@ setup(
 
     # The project's main homepage.
     url='https://github.com/post2we/nbloader',
+    download_url = 'https://github.com/post2web/nbloader/archive/1.0.3.tar.gz',
 
     # Author details
     author='Ivelin Angelov',
