@@ -11,7 +11,7 @@ notebook = Notebook('test_notebook.ipynb')
 notebook.run_all()
 print(notebook.ns['b']) # prints out 10
 ```
-The notebook object has its own name space: notebook.ns
+The Notebook object has its own name space: notebook.ns
 
 
 You can run individual cells using cell tags. 
