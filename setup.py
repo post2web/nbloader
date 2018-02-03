@@ -13,13 +13,13 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='1.0.3',
+    version='1.0.4',
 
     description='Reuse code from Jupyter Notebooks',
 
     # The project's main homepage.
     url='https://github.com/post2we/nbloader',
-    download_url = 'https://github.com/post2web/nbloader/archive/1.0.3.tar.gz',
+    download_url = 'https://github.com/post2web/nbloader/archive/1.0.4.tar.gz',
 
     # Author details
     author='Ivelin Angelov',
