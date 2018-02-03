@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='nbloader',
-    version='1.0.4',
+    version='1.0.5',
     description='Reuse code from Jupyter Notebooks',
     url='https://github.com/post2web/nbloader',
     download_url = 'https://github.com/post2web/nbloader/archive/1.0.4.tar.gz',
