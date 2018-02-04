@@ -65,8 +65,23 @@ class Notebook(object):
                 os.chdir(cwd)
         os.chdir(cwd)
         
-    def run_all(self):
-        self._run(self.cells)
+    def run_all(self, blacklist=None):
+        cells = self.cells[:]
+        if blacklist is not None:
+            if type(blacklist) == str:
+                blacklist = [blacklist]
+            filtered_cells = []
+            for cell in cells:
+                is_blacklisted = False
+                for tag in blacklist:
+                    if tag in cell['tags']:
+                        is_blacklisted = True
+                        break
+                if not is_blacklisted:
+                    filtered_cells.append(cell)
+            cells = filtered_cells
+
+        self._run(cells)
         return self
         
     def run_cells(self):
