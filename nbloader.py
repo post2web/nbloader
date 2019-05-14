@@ -13,6 +13,8 @@ class NotImplementedError(Exception):
 
 class Notebook(object):
 
+    blacklist = ['__skip__']
+
     def __init__(self, nb_path, ns=None, tag_md=True, nb_dir=None):
         self.nb_path = nb_path
 
@@ -26,15 +28,12 @@ class Notebook(object):
         self.nb_dir = nb_dir
 
         self.restart(ns)
-        self.shell = InteractiveShell.instance()
+        self.shell = get_ipython()
         self.refresh()
         self.run_tag('__init__', strict=False)
 
     def restart(self, ns=None):
         self.ns = ns or dict()
-        if 'get_ipython' not in self.ns:
-            # not sure if thats really needed
-            self.ns['get_ipython'] = get_ipython
 
     def refresh(self):
         self.cells = []
@@ -50,9 +49,11 @@ class Notebook(object):
         compiler = CachingCompiler()
         for i, cell in enumerate(notebook.cells):
             if cell.cell_type == 'markdown' and self.tag_md:
+                # tokenize markdown block
                 tokens = self.md_parser.block(cell.source)
                 for tok in tokens:
                     if tok['type'] == 'heading':
+                        # filter out smaller headings and add new heading
                         new_level, tag = tok['level'], tok['text']
                         self.md_tags = [
                             (lvl, tag) for lvl, tag in self.md_tags
@@ -82,15 +83,20 @@ class Notebook(object):
             os.chdir(cwd)
 
     def run_all(self, blacklist=None):
-        cells = self.cells[:]
-        if blacklist:
+        if blacklist is False: # disable blacklist
+            blacklist = []
+        else:
             if isinstance(blacklist, str):
                 blacklist = [blacklist]
+            elif blacklist is None:
+                blacklist = []
 
-            cells = [
-                cell for cell in cells
-                if not any(tag in cell['tags'] for tag in blacklist)
-            ]
+            blacklist += self.blacklist # merge blacklist
+
+        cells = [
+            cell for cell in self.cells
+            if not any(tag in cell['tags'] for tag in blacklist)
+        ]
 
         self._run(cells)
         return self
@@ -100,30 +106,31 @@ class Notebook(object):
 
     def _cell_tags(self, cell):
         tags = []
+
+        tags = cell.metadata.get('tags', [])
+
+        for level, tag in self.md_tags:
+            # can access either through heading text
+            # or with level specified using markdown syntax
+            tags.append(tag)
+            tags.append('#' * level + ' ' + tag)
+
+        if self.block_tag:
+            tags.append(self.block_tag)
+
         if cell.cell_type == 'code':
-            tags = cell.metadata.get('tags', [])
-
-            for level, tag in self.md_tags:
-                # can access either through heading text
-                # or with level specified using markdown syntax
-                tags.append(tag)
-                tags.append('#' * level + ' ' + tag)
-
-            if self.block_tag:
-                tags.append(self.block_tag)
-
             if cell.source and cell.source[0] == '#':
                 first_line = cell.source.split('\n', 1)[0]
 
-                if first_line.startswith('##block '):
+                if first_line.startswith('##block '): # start block ttag
                     first_line = first_line[8:].strip()
                     self.block_tag = first_line
                     tags.append(first_line)
 
-                elif first_line.startswith('##lastblock'):
+                elif first_line.startswith('##lastblock'): # end block tag
                     self.block_tag = None
 
-                else:
+                else: # line tag
                     first_line = first_line.strip('#').strip()
                     tags.extend(first_line.split())
 
@@ -135,6 +142,24 @@ class Notebook(object):
         if cells:
             self._run(cells)
         else:
+            assert not strict, 'Tag "{}" found'.format(tag)
+        return self
+
+    def run_before(self, tag, strict=True):
+        try:
+            i = next(i for i, cell in enumerate(self.cells) if tag in cell['tags'])
+            if i > 0: # if i is zero, it's the first one and there's no cells before.
+                self._run(cells[:i])
+        except StopIteration:
+            assert not strict, 'Tag "{}" found'.format(tag)
+        return self
+
+    def run_after(self, tag, strict=True):
+        try:
+            i = next(i for i, cell in enumerate(self.cells[::-1]) if tag in cell['tags'])
+            if i > 0: # if i is zero, it's the last one and there's no cells after.
+                self._run(cells[-i:])
+        except StopIteration:
             assert not strict, 'Tag "{}" found'.format(tag)
         return self
 
