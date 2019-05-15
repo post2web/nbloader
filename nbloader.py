@@ -32,7 +32,7 @@ class Notebook(object):
     blacklist = {'__skip__'}
 
     def __init__(self, nb_path, ns=None, tag_md=True, nb_dir=None,
-                 close_blocks_at_headings=True, tag_marker='#'):
+                 close_blocks_at_headings=True, tag_marker='#', init=True):
         '''
 
         Arguments:
@@ -61,16 +61,36 @@ class Notebook(object):
         self.restart(ns)
         self.shell = get_ipython()
         self.refresh()
-        self.run_tag('__init__', strict=False)
+        if init:
+            self.run_tag('__init__', strict=False)
 
     def __repr__(self):
         return '<Notebook({}) {} cells, exec count: {} >'.format(
             self.nb_path, len(self.cells), self.exec_count)
 
     def summary(self, tag=None):
+        all_tags = [tag for cell in self.cells for l, tag in cell['md_tags']]
+
+        heading, count = None, 0
         for cell in self.cells:
-            # TODO: print out hierarchy with cell count
-            print(cell['tags'])
+            # TODO: print out hierarchy with cell count properly
+            if cell['md_tags'] != heading:
+                if heading and count:
+                    print('\t' * heading[-1][0] + '({} cells.)'.format(count))
+
+                heading, count = cell['md_tags'], 1
+                l, h = heading[-1]
+                print('  '*(l-1) + '#'*l + ' ' + h)
+
+            else:
+                count += 1
+        if heading:
+            print('\t' * heading[-1][0] + '({} cells.)'.format(count))
+
+    def nsvars(self, k):
+        if isinstance(k, str):
+            return self.ns[x]
+        return tuple(self.var(ki) for ki in k)
 
     def restart(self, ns=None):
         self.ns = ns or dict()
@@ -106,7 +126,7 @@ class Notebook(object):
                         if self.close_blocks_at_headings: # new heading reached. Close block.
                             self.block_tag = None
 
-            elif cell.cell_type == 'code':
+            elif cell.cell_type == 'code' and cell.source:
                 # translate all magic % commands to code
                 source = self.shell.input_transformer_manager.transform_cell(cell.source)
                 # need to use this cell_name so it gives a nice debug information from the notebook
@@ -114,7 +134,9 @@ class Notebook(object):
                 # compile the code
                 source = compile(source, cell_name, 'exec')
 
-                self.cells.append({'code': source, 'tags': self._cell_tags(cell)})
+                self.cells.append({'code': source,
+                                   'tags': self._cell_tags(cell),
+                                   'md_tags': tuple(self.md_tags)})
 
     def _run(self, cells):
         with temp_chdir(self.nb_dir):
@@ -142,7 +164,7 @@ class Notebook(object):
             blacklist |= self.blacklist # merge blacklist
 
         return [
-            cell for cell in self.cells
+            cell for cell in cells
             if not any(tag in blacklist for tag in cell['tags'])
         ]
 
