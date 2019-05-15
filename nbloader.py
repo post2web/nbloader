@@ -32,7 +32,7 @@ class Notebook(object):
     blacklist = {'__skip__'}
 
     def __init__(self, nb_path, ns=None, tag_md=True, nb_dir=None,
-                 close_blocks_at_headings=True, tag_marker='#', init=True):
+                 close_blocks_at_headings=True, tag_marker='##', init=True):
         '''
 
         Arguments:
@@ -186,7 +186,7 @@ class Notebook(object):
             tags.append(self.block_tag)
 
         if cell.cell_type == 'code':
-            if cell.source and cell.source[0] == '#':
+            if cell.source:
                 first_line = cell.source.split('\n', 1)[0]
 
                 if first_line.startswith('##block '): # start block ttag
@@ -197,7 +197,7 @@ class Notebook(object):
                 elif first_line.startswith('##lastblock'): # end block tag
                     self.block_tag = None
 
-                else: # line tag
+                elif first_line.startswith(self.tag_marker): # line tag
                     first_line = first_line.strip('#').strip()
                     tags.extend(first_line.split())
 
