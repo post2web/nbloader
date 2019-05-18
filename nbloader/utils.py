@@ -19,10 +19,15 @@ def temp_chdir(directory):
 
 def get_tag_index(cells, tag, end=False, strict=False):
     '''Get the index of the first (or last) occurrence of a tag.'''
+    if isinstance(tag, str):
+        tag = (tag,)
+
     try:
-        return (next(i for i, cell in enumerate(cells) if tag in cell['tags'])
+        return (next(i for i, cell in enumerate(cells)
+                     if all(t in cell['tags'] for t in tag))
                 if not end else
-                -next(i for i, cell in enumerate(cells[::-1]) if tag in cell['tags'])
+                -next(i for i, cell in enumerate(cells[::-1])
+                      if all(t in cell['tags'] for t in tag))
                ) or None
     except StopIteration:
         assert not strict, 'Tag "{}" found'.format(tag)
