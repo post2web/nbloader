@@ -32,8 +32,9 @@ class NotebookWidget(Notebook):
     _run_output = None
 
     def __init__(self, *a, ast_node_interactivity='last_expr', display_code=True, **kw):
-        super().__init__(*a, ast_node_interactivity=ast_node_interactivity, **kw)
         self.display_code = display_code
+        super().__init__(*a, ast_node_interactivity=ast_node_interactivity, **kw)
+
 
     def _iter_run(self, cells, show=True, append=False, collapsed=False):
         if append and self._run_output:
