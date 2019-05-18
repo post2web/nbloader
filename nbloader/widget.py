@@ -28,14 +28,14 @@ from .notebook import Notebook
 
 
 class NotebookWidget(Notebook):
-    cell_output_layout = w.Layout(min_width='14em')
+    cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
     display_code = True
     _run_output = None
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
 
-    def _iter_run(self, cells, show=True, append=False):
+    def _iter_run(self, cells, show=True, append=False, collapsed=False):
         if append and self._run_output:
             run_output = self._run_output
         else:
@@ -57,7 +57,7 @@ class NotebookWidget(Notebook):
                             display(Code(cell['source'], language='ipython3'))
 
                     with cell_output.capture_item('Out [{}]'.format(i),
-                                                  selected=True,
+                                                  selected=not collapsed,
                                                   layout=self.cell_output_layout):
                         self._execute_cell(cell)
                         yield
