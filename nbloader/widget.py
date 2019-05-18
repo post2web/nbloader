@@ -29,11 +29,11 @@ from .notebook import Notebook
 
 class NotebookWidget(Notebook):
     cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
-    display_code = True
     _run_output = None
 
-    def __init__(self, *a, **kw):
-        super().__init__(*a, **kw)
+    def __init__(self, *a, ast_node_interactivity='last_expr', display_code=True, **kw):
+        super().__init__(*a, ast_node_interactivity=ast_node_interactivity, **kw)
+        self.display_code = display_code
 
     def _iter_run(self, cells, show=True, append=False, collapsed=False):
         if append and self._run_output:

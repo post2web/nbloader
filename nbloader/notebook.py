@@ -1,21 +1,13 @@
 import os
 import io
-import copy
+# import copy
 from contextlib import contextmanager
 
 import mistune
-
 from nbformat import reader, converter, current_nbformat
 from IPython import get_ipython
 
 from .utils import *
-
-try:
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except ImportError:
-    HAS_MATPLOTLIB = False
-
 
 
 class Notebook(object):
@@ -54,6 +46,7 @@ class Notebook(object):
         # output
         self.auto_init = init
 
+        # setup shell
         self.ast_node_interactivity = ast_node_interactivity
         self.shell = get_ipython()
         self.refresh()
@@ -152,26 +145,29 @@ class Notebook(object):
 
         for i, cell in enumerate(notebook.cells):
             if cell.cell_type == 'markdown' and self.md_parser:
-                # tokenize markdown block
-                tokens = self.md_parser.block(cell.source)
-                for tok in tokens:
-                    if tok['type'] == 'heading':
-                        # filter out smaller headings and add new heading
-                        new_level, tag = tok['level'], tok['text']
-                        self.md_tags = [
-                            (lvl, tag) for lvl, tag in self.md_tags
-                            if lvl < new_level
-                        ]
-                        self.md_tags.append((new_level, tag))
-
-                        if self.close_blocks_at_headings: # new heading reached. Close block.
-                            self.block_tag = None
+                self._markdown_tags(cell)
 
             elif cell.cell_type == 'code' and cell.source:
                 self.cells.append({'source': cell.source,
                                    'tags': self._cell_tags(cell),
                                    'md_tags': tuple(self.md_tags),
                                    'exec_count': 0, 'exec_index': 0})
+
+    def _markdown_tags(self, cell):
+        # tokenize markdown block
+        tokens = self.md_parser.block(cell.source)
+        for tok in tokens:
+            if tok['type'] == 'heading':
+                # filter out smaller headings and add new heading
+                new_level, tag = tok['level'], tok['text']
+                self.md_tags = [
+                    (lvl, tag) for lvl, tag in self.md_tags
+                    if lvl < new_level
+                ]
+                self.md_tags.append((new_level, tag))
+
+                if self.close_blocks_at_headings: # new heading reached. Close block.
+                    self.block_tag = None
 
     def _cell_tags(self, cell):
         '''Extract tags for a cell.'''
@@ -262,9 +258,8 @@ class Notebook(object):
     def run_before(self, tag, include=False, strict=True, blacklist=None, **kw):
         '''Run all cells before a tag.'''
         i = get_tag_index(self.cells, tag, end=include, strict=strict)
-        assert i or not strict, 'Tag "{}" found'.format(tag)
 
-        if i:
+        if i: # otherwise, there's nothing before
             cells = filter_blacklist(self.cells[:i], blacklist, self.blacklist)
             self._run(cells, **kw)
         return self
@@ -273,8 +268,8 @@ class Notebook(object):
         '''Run all cells after a matching tag.'''
         i = get_tag_index(self.cells, tag, end=not include, strict=strict)
 
-        if i:
-            cells = filter_blacklist(self.cells[-i:], blacklist, self.blacklist)
+        if i: # otherwise, there's nothing after
+            cells = filter_blacklist(self.cells[i:], blacklist, self.blacklist)
             self._run(cells, **kw)
         return self
 
