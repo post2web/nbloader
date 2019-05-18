@@ -248,8 +248,10 @@ class Notebook(object):
 
     def run_tag(self, tag, strict=True, blacklist=None, **kw):
         '''Run all cells matching a tag.'''
-        cells = [cell for cell in self.cells if tag in cell['tags']]
-        assert cells or not strict, 'Tag "{}" found'.format(tag)
+        if isinstance(tag, str):
+            tag = (tag,)
+        cells = [cell for cell in self.cells if all(t in cell['tags'] for t in tag)]
+        assert cells or not strict, 'Tag {} found'.format(tag)
 
         cells = filter_blacklist(cells, blacklist, self.blacklist)
         self._run(cells, **kw)
