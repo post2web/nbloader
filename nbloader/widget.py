@@ -51,7 +51,7 @@ class NotebookWidget(Notebook):
 
         for cell in super()._iter_cells(cells):
             with run_output.capture_item():
-                cell_output = Accordion(layout=accordion_layout)
+                cell_output = Accordion(layout=self.accordion_layout)
                 display(cell_output)
 
                 i = self.exec_count + 1
