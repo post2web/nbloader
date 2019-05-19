@@ -1,13 +1,22 @@
 import os
 import io
+import types
 # import copy
 from contextlib import contextmanager
 
 import mistune
 from nbformat import reader, converter, current_nbformat
 from IPython import get_ipython
+from IPython.core.interactiveshell import DummyMod, ExecutionResult, ExecutionInfo
+from IPython.core.compilerop import CachingCompiler
 
 from .utils import *
+
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
 
 
 class Notebook(object):
@@ -36,6 +45,7 @@ class Notebook(object):
         # notebook source
         self.nb_path = nb_path
         self.nb_dir = os.path.dirname(nb_path) if nb_dir is None else nb_dir
+        self.filename = os.path.splitext(os.path.basename(nb_path))[0]
 
         # markdown
         self.md_parser = mistune.Markdown() if tag_md else None
@@ -121,10 +131,12 @@ class Notebook(object):
         Arguments:
             ns (dict, optional): the namespace to initialize with. Defaults to an empty dict.
         '''
-        self.ns = ns or dict()
-        ns_, self.shell.user_ns = self.shell.user_ns, self.ns # swap our namespace
-        self.shell.init_user_ns() # add in all of the ipython history stuff into our ns
-        self.shell.user_ns = ns_ # replace global namespace
+        self.mod = mod = DummyMod()
+        self.ns = mod.__dict__ = ns or dict()
+        # sys.modules[self.filename] = mod
+
+        with self._setup_environment():
+            self.shell.init_user_ns() # add in all of the ipython history stuff into our ns
 
         self.exec_count = 0
         if self.auto_init:
@@ -143,12 +155,19 @@ class Notebook(object):
         # convert to current notebook version
         notebook = converter.convert(notebook, current_nbformat)
 
+        compiler = CachingCompiler()
         for i, cell in enumerate(notebook.cells):
             if cell.cell_type == 'markdown' and self.md_parser:
                 self._markdown_tags(cell)
 
             elif cell.cell_type == 'code' and cell.source:
-                self.cells.append({'source': cell.source,
+                # translate all magic % commands to code
+                source = self.shell.input_transformer_manager.transform_cell(cell.source)
+                # need to use this cell_name so it gives a nice debug information from the notebook
+                cell_name = compiler.cache(source, i)
+                # compile the code
+                source = compile(source, cell_name, 'exec')
+                self.cells.append({'source': cell.source, 'code': source,
                                    'tags': self._cell_tags(cell),
                                    'md_tags': tuple(self.md_tags)})
 
@@ -214,21 +233,31 @@ class Notebook(object):
             try:
                 # swap out ipython context vars
                 orig_ns, self.shell.user_ns = self.shell.user_ns, self.ns
+                # orig_mod, self.shell.user_module = self.shell.user_module, self.mod
                 ast_node_interactivity, self.shell.ast_node_interactivity = (
                     self.shell.ast_node_interactivity, self.ast_node_interactivity)
                 yield
             finally:
                 # swap values back
                 self.shell.user_ns = orig_ns
+                # self.shell.user_mod = orig_mod
                 self.shell.ast_node_interactivity = ast_node_interactivity
 
     def _execute_cell(self, cell):
         '''Execute a single cell.'''
-        # exec(cell['code'], self.ns)
+        print(cell['source'])
+        exec(cell['code'], self.ns)
+
+        if HAS_MATPLOTLIB:
+            if plt.gcf().axes:
+                plt.show()
+            else:
+                plt.close()
+        return ExecutionResult(ExecutionInfo(cell['source'], False, False, False))
 
         # See: https://github.com/ipython/ipython/blob/b70b3f21749ca969088fdb54edcc36bb8a2267b9/IPython/core/interactiveshell.py#L2801
-        result = self.shell.run_cell(cell['source'])
-        self.exec_count += 1
+        # result = self.shell.run_cell(cell['source'])
+        # self.exec_count += 1
         return result
 
     def _iter_cells(self, cells, raise_exceptions=False):
@@ -239,12 +268,11 @@ class Notebook(object):
 
     def _run(self, cells, **kw):
         '''Run all cells passed.'''
-        if cells:
-            for cell in self._iter_cells(cells, **kw):
-                result = self._execute_cell(cell)
-                if result.error_in_exec and not isinstance(result.error_in_exec, GeneratorExit):
-                    result.raise_error()
-                    break
+        for cell in self._iter_cells(cells, **kw):
+            result = self._execute_cell(cell)
+            if result.error_in_exec and not isinstance(result.error_in_exec, GeneratorExit):
+                result.raise_error()
+                break
 
         return self
 

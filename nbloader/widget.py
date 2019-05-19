@@ -40,6 +40,19 @@ class NotebookWidget(Notebook):
         super().__init__(*a, ast_node_interactivity=ast_node_interactivity, **kw)
 
 
+
+    def show_cells(self, tag):
+        if isinstance(tag, str):
+            tag = (tag,)
+        cells = [cell for cell in self.cells if all(t in cell['tags'] for t in tag)]
+        out = Carousel()
+        display(out)
+
+        for cell in cells:
+            with out.capture_item():
+                display(Code(cell['source'], language='ipython3'))
+
+
     def _iter_cells(self, cells, show=True, append=False, collapsed=False):
         if append and self._run_output:
             run_output = self._run_output
