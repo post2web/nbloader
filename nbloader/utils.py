@@ -17,6 +17,11 @@ def temp_chdir(directory):
         if directory and directory != cwd:
             os.chdir(cwd)
 
+
+
+
+
+
 def get_tag_index(cells, tag, end=False, strict=False):
     '''Get the index of the first (or last) occurrence of a tag.'''
     if isinstance(tag, str):
@@ -33,7 +38,7 @@ def get_tag_index(cells, tag, end=False, strict=False):
         assert not strict, 'Tag "{}" found'.format(tag)
         return None
 
-def filter_blacklist(cells, blacklist=None, default_blacklist=None):
+def filter_blacklist(cells, blacklist=None, default_blacklist=None, include=None):
     '''Filter out cells in both the class blacklist and the passed blacklist.
 
     Arguments:
@@ -45,6 +50,7 @@ def filter_blacklist(cells, blacklist=None, default_blacklist=None):
             If False, it will disable blacklist filtering.
             If None (default), it will only use the class blacklist.
         default_blacklist (tuple|None): the classwide/default blacklist to be merged.
+        include (tuple|None): items to remove from the blacklist.
     '''
     if blacklist is False: # disable blacklist
         blacklist = set()
@@ -58,6 +64,9 @@ def filter_blacklist(cells, blacklist=None, default_blacklist=None):
 
         if default_blacklist:
             blacklist |= default_blacklist # merge blacklist with defaults
+
+        if include:
+            blacklist -= set(include)
 
     return [
         cell for cell in cells

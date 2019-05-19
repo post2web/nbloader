@@ -150,8 +150,7 @@ class Notebook(object):
             elif cell.cell_type == 'code' and cell.source:
                 self.cells.append({'source': cell.source,
                                    'tags': self._cell_tags(cell),
-                                   'md_tags': tuple(self.md_tags),
-                                   'exec_count': 0, 'exec_index': 0})
+                                   'md_tags': tuple(self.md_tags)})
 
     def _markdown_tags(self, cell):
         # tokenize markdown block
@@ -210,35 +209,43 @@ class Notebook(object):
     def _setup_environment(self):
         '''Prepare the IPython environment to run cells from the loaded notebook.'''
         with temp_chdir(self.nb_dir): # possibly change directory
-            # swap out ipython context vars
-            orig_ns, self.shell.user_ns = self.shell.user_ns, self.ns
-            ast_node_interactivity, self.shell.ast_node_interactivity = (
-                self.shell.ast_node_interactivity, self.ast_node_interactivity)
-            yield
-            # swap values back
-            self.shell.user_ns = orig_ns
-            self.shell.ast_node_interactivity = ast_node_interactivity
+            try:
+                # swap out ipython context vars
+                orig_ns, self.shell.user_ns = self.shell.user_ns, self.ns
+                ast_node_interactivity, self.shell.ast_node_interactivity = (
+                    self.shell.ast_node_interactivity, self.ast_node_interactivity)
+                yield
+            finally:
+                # swap values back
+                self.shell.user_ns = orig_ns
+                self.shell.ast_node_interactivity = ast_node_interactivity
 
     def _execute_cell(self, cell):
         '''Execute a single cell.'''
         # exec(cell['code'], self.ns)
-        self.shell.run_cell(cell['source'])
-        self.exec_count += 1
-        cell['exec_index'] = self.exec_count
-        cell['exec_count'] += 1
 
-    def _iter_run(self, cells):
+        # See: https://github.com/ipython/ipython/blob/b70b3f21749ca969088fdb54edcc36bb8a2267b9/IPython/core/interactiveshell.py#L2801
+        result = self.shell.run_cell(cell['source'])
+        self.exec_count += 1
+        return result
+
+    def _iter_cells(self, cells, raise_exceptions=False):
         '''Run each cell yield in between each one.'''
         with self._setup_environment():
             for cell in cells:
-                self._execute_cell(cell)
-                yield
+                yield cell
 
     def _run(self, cells, **kw):
         '''Run all cells passed.'''
-        for _ in self._iter_run(cells, **kw):
-            pass
+        if cells:
+            for cell in self._iter_cells(cells, **kw):
+                result = self._execute_cell(cell)
+                if result.error_in_exec and not isinstance(result.error_in_exec, GeneratorExit):
+                    result.raise_error()
+                    break
+
         return self
+
 
     def run_all(self, blacklist=None, **kw):
         '''Run all cells (excluding those in the blacklist).'''
@@ -253,7 +260,7 @@ class Notebook(object):
         cells = [cell for cell in self.cells if all(t in cell['tags'] for t in tag)]
         assert cells or not strict, 'Tag {} found'.format(tag)
 
-        cells = filter_blacklist(cells, blacklist, self.blacklist)
+        cells = filter_blacklist(cells, blacklist, self.blacklist, tag)
         self._run(cells, **kw)
         return self
 
