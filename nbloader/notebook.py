@@ -152,6 +152,8 @@ class Notebook(object):
                                    'tags': self._cell_tags(cell),
                                    'md_tags': tuple(self.md_tags)})
 
+        return self
+
     def _markdown_tags(self, cell):
         # tokenize markdown block
         tokens = self.md_parser.block(cell.source)

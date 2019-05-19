@@ -30,7 +30,9 @@ from .notebook import Notebook
 
 
 class NotebookWidget(Notebook):
+    accordion_layout = w.Layout(min_width='7em', flex='1 0 8em')
     cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
+
     _run_output = None
 
     def __init__(self, *a, ast_node_interactivity='last_expr', display_code=True, **kw):
@@ -49,7 +51,7 @@ class NotebookWidget(Notebook):
 
         for cell in super()._iter_cells(cells):
             with run_output.capture_item():
-                cell_output = Accordion()
+                cell_output = Accordion(layout=accordion_layout)
                 display(cell_output)
 
                 i = self.exec_count + 1
