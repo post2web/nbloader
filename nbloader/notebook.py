@@ -245,7 +245,6 @@ class Notebook(object):
 
     def _execute_cell(self, cell):
         '''Execute a single cell.'''
-        print(cell['source'])
         exec(cell['code'], self.ns)
 
         if HAS_MATPLOTLIB:
