@@ -152,7 +152,7 @@ class Notebook(object):
         ts = os.stat(self.nb_path).st_mtime
         if on_changed and ts == self.timestamp:
             return self
-        self.ts = timestamp
+        self.timestamp = ts
 
         self.cells = []
         self.md_tags = []
