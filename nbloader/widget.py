@@ -30,7 +30,7 @@ from .notebook import Notebook
 
 
 class NotebookWidget(Notebook):
-    grid_cell_layout = w.Layout(min_width='7em', flex='1 0 auto')
+    grid_cell_layout = w.Layout(min_width='7em', flex='1 0 auto', max_width='100%')
     cell_code_layout = w.Layout(min_width='14em', max_height='70vh', overflow_x='auto')
     cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
 
