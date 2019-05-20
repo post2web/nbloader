@@ -138,7 +138,7 @@ class Notebook(object):
         self.ns = mod.__dict__ = ns or dict()
         # sys.modules[self.filename] = mod
 
-        with self._setup_environment():
+        with self.environment():
             self.shell.init_user_ns() # add in all of the ipython history stuff into our ns
 
         self.exec_count = 0
@@ -170,7 +170,7 @@ class Notebook(object):
                 self._markdown_tags(cell)
 
             elif cell.cell_type == 'code' and cell.source:
-                source = self._compile_code(cell.source)
+                source = self._compile_code(cell.source, i)
                 self.cells.append({'source': cell.source, 'code': source,
                                    'tags': self._cell_tags(cell),
                                    'md_tags': tuple(self.md_tags)})
@@ -179,7 +179,7 @@ class Notebook(object):
 
     def _compile_code(self, source, i=0):
         # translate all magic % commands to code
-        source = self.shell.input_transformer_manager.transform_cell(cell.source)
+        source = self.shell.input_transformer_manager.transform_cell(source)
         # need to use this cell_name so it gives a nice debug information from the notebook
         cell_name = self.compiler.cache(source, i)
         # compile the code
@@ -246,6 +246,7 @@ class Notebook(object):
             try:
                 # swap out ipython context vars
                 orig_ns, self.shell.user_ns = self.shell.user_ns, self.ns
+                # NOTE: switching the module causes ns=globals() to fail. Not sure if it's necessary.
                 # orig_mod, self.shell.user_module = self.shell.user_module, self.mod
                 ast_node_interactivity, self.shell.ast_node_interactivity = (
                     self.shell.ast_node_interactivity, self.ast_node_interactivity)
@@ -271,6 +272,8 @@ class Notebook(object):
         result = ExecutionResult(ExecutionInfo(cell['source'], False, False, False))
 
         # See: https://github.com/ipython/ipython/blob/b70b3f21749ca969088fdb54edcc36bb8a2267b9/IPython/core/interactiveshell.py#L2801
+        # FIXME: calling run_cell messes with the local scope of lambda functions. No outside variables are defined.
+        #        I assume this is also the case for reg functions but I haven't tested.
         # result = self.shell.run_cell(cell['source'])
         self.exec_count += 1
         return result
