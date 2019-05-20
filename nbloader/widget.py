@@ -33,6 +33,7 @@ class NotebookWidget(Notebook):
     grid_cell_layout = w.Layout(min_width='7em', flex='1 0 auto', max_width='100%')
     cell_code_layout = w.Layout(min_width='14em', max_height='70vh', overflow_x='auto')
     cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
+    allow_both_code_and_output_open = True
 
     _run_output = None
 
@@ -50,7 +51,9 @@ class NotebookWidget(Notebook):
         display(out)
 
         for cell in cells:
-            with out.capture_item(layout=self.cell_code_layout):
+            with out.capture_item(layout=self.cell_code_layout) as o:
+                # NOTE: This is to fix syntax highlighting in Jupyterlab
+                o.add_class('output_html')
                 display(Code(cell['source'], language='ipython3'))
 
 
@@ -71,17 +74,23 @@ class NotebookWidget(Notebook):
                 i = self.exec_count + 1
                 if self.display_code:
                     with cell_output.capture_item('In [{}]'.format(i),
-                                                  layout=self.cell_code_layout):
+                                                  layout=self.cell_code_layout) as o:
+                        # NOTE: This is to fix syntax highlighting in Jupyterlab
+                        o.add_class('output_html')
                         display(Code(cell['source'], language='ipython3'))
 
-                with cell_output.capture_item('Out [{}]'.format(i),
+                if self.allow_both_code_and_output_open:
+                    cell_output = Accordion()
+                    display(cell_output)
+
+                with cell_output.capture_item('Out [*]',
                                               selected=not collapsed,
                                               layout=self.cell_output_layout):
                     try:
                         yield cell
                     except GeneratorExit:
                         pass
-
+                    cell_output.set_title(len(cell_output.children) - 1, 'Out [{}]'.format(i))
 '''
 
 IPython Widget Customizations
@@ -119,7 +128,7 @@ class Carousel(w.Box):
         out = Output(stop_execution=stop_execution, **kw)
         self.append_item(out)
         with out:
-            yield
+            yield out
 
     def append_item(self, child):
         self.children += (child,)
@@ -132,7 +141,7 @@ class Tab(w.Tab):
         out = Output(stop_execution=stop_execution, **kw)
         self.append_item(out, title, selected=selected)
         with out:
-            yield
+            yield out
 
     def append_item(self, child, title=None, selected=None):
         self.children += (child,)
@@ -147,7 +156,7 @@ class Accordion(w.Accordion):
         out = Output(stop_execution=stop_execution, **kw)
         self.append_item(out, title, selected=selected)
         with out:
-            yield
+            yield out
 
     def append_item(self, child, title=None, selected=None):
         self.children += (child,)
