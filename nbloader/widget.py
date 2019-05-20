@@ -31,9 +31,11 @@ from .notebook import Notebook
 
 class NotebookWidget(Notebook):
     grid_cell_layout = w.Layout(min_width='7em', flex='1 0 auto', max_width='100%')
-    cell_code_layout = w.Layout(min_width='14em', max_height='70vh', overflow_x='auto')
+    cell_code_layout = w.Layout(min_width='14em', max_height='70vh', max_width='100%',
+                                flex='1 0 auto', overflow_x='auto')
     cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
-    allow_both_code_and_output_open = True
+    # FIXME: this causes `selected=not collapsed` for the Output display to not work. It stays collapsed.
+    allow_both_code_and_output_open = False#True
 
     _run_output = None
 
@@ -52,8 +54,9 @@ class NotebookWidget(Notebook):
 
         for cell in cells:
             with out.capture_item(layout=self.cell_code_layout) as o:
-                # NOTE: This is to fix syntax highlighting in Jupyterlab
+                # HACK: This is to fix syntax highlighting in Jupyterlab
                 o.add_class('output_html')
+                # TODO: fix overflow for code cells to prevent wrapping.
                 display(Code(cell['source'], language='ipython3'))
 
 
@@ -68,23 +71,25 @@ class NotebookWidget(Notebook):
 
         for cell in super()._iter_cells(cells):
             with run_output.capture_item(layout=self.grid_cell_layout):
-                cell_output = Accordion()
-                display(cell_output)
+                cell_output = Accordion(children=())
+                if '__hide__' not in cell['tags']:
+                    display(cell_output)
 
                 i = self.exec_count + 1
                 if self.display_code:
                     with cell_output.capture_item('In [{}]'.format(i),
                                                   layout=self.cell_code_layout) as o:
-                        # NOTE: This is to fix syntax highlighting in Jupyterlab
+                        # HACK: This is to fix syntax highlighting in Jupyterlab
                         o.add_class('output_html')
                         display(Code(cell['source'], language='ipython3'))
 
                 if self.allow_both_code_and_output_open:
-                    cell_output = Accordion()
-                    display(cell_output)
+                    cell_output = Accordion(children=())
+                    if '__hide__' not in cell['tags']:
+                        display(cell_output)
 
                 with cell_output.capture_item('Out [*]',
-                                              selected=not collapsed,
+                                              selected=not (collapsed or '__collapsed__' in cell['tags']),
                                               layout=self.cell_output_layout):
                     try:
                         yield cell

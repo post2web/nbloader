@@ -302,7 +302,7 @@ class Notebook(object):
 
     def run_code(self, source):
         compiled = self._compile_code(source)
-        self._execute_cell({'source': source, 'code': compiled})
+        self._execute_cell({'source': source, 'code': compiled, 'tags': [None]})
 
     def run_all(self, blacklist=None, **kw):
         '''Run all cells (excluding those in the blacklist).'''
@@ -320,6 +320,16 @@ class Notebook(object):
         cells = filter_blacklist(cells, blacklist, self.blacklist, tag)
         self._run(cells, **kw)
         return self
+
+    # def run_tags(self, tags, strict=False, blacklist=None, **kw):
+    #     '''Run cells matching any of multiple tags.'''
+    #     tags = [(tag,) if isinstance(tag, str) else tag for tag in tags]
+    #     cells = [cell for cell in self.cells if any(all(t in cell['tags'] for t in tag) for tag in tags)]
+    #     assert cells or not strict, 'Tag {} found'.format(tag)
+    #
+    #     cells = filter_blacklist(cells, blacklist, self.blacklist, tag)
+    #     self._run(cells, **kw)
+    #     return self
 
     def run_before(self, tag, include=False, strict=True, blacklist=None, **kw):
         '''Run all cells before a tag.'''
