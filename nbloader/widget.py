@@ -30,7 +30,8 @@ from .notebook import Notebook
 
 
 class NotebookWidget(Notebook):
-    accordion_layout = w.Layout(min_width='7em', flex='1 0 8em')
+    grid_cell_layout = w.Layout(min_width='7em', flex='1 0 auto')
+    cell_code_layout = w.Layout(min_width='14em', max_height='70vh', overflow_x='auto')
     cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
 
     _run_output = None
@@ -49,7 +50,7 @@ class NotebookWidget(Notebook):
         display(out)
 
         for cell in cells:
-            with out.capture_item():
+            with out.capture_item(layout=self.cell_code_layout):
                 display(Code(cell['source'], language='ipython3'))
 
 
@@ -63,14 +64,14 @@ class NotebookWidget(Notebook):
                 display(run_output)
 
         for cell in super()._iter_cells(cells):
-            with run_output.capture_item():
-                cell_output = Accordion(layout=self.accordion_layout)
+            with run_output.capture_item(layout=self.grid_cell_layout):
+                cell_output = Accordion()
                 display(cell_output)
 
                 i = self.exec_count + 1
                 if self.display_code:
                     with cell_output.capture_item('In [{}]'.format(i),
-                                                  layout=self.cell_output_layout):
+                                                  layout=self.cell_code_layout):
                         display(Code(cell['source'], language='ipython3'))
 
                 with cell_output.capture_item('Out [{}]'.format(i),

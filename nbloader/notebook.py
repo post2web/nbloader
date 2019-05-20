@@ -27,6 +27,7 @@ class Notebook(object):
 
     def __init__(self, nb_path, ns=None, nb_dir=None,
                  init=True, tag_md=True,
+                 autorefresh=False,
                  ast_node_interactivity='none'):
         '''Load a Jupyter Notebook as an object.
 
@@ -46,6 +47,8 @@ class Notebook(object):
         self.nb_path = nb_path
         self.nb_dir = os.path.dirname(nb_path) if nb_dir is None else nb_dir
         self.filename = os.path.splitext(os.path.basename(nb_path))[0]
+        self.timestamp = None
+        self.autorefresh = autorefresh
 
         # markdown
         self.md_parser = mistune.Markdown() if tag_md else None
@@ -143,8 +146,14 @@ class Notebook(object):
             self.run_tag('__init__', strict=False)
         return self
 
-    def refresh(self):
+    def refresh(self, on_changed=False):
         '''Reload the notebook from file and compile cells.'''
+        # only refresh if the file has updated
+        ts = os.stat(self.nb_path).st_mtime
+        if on_changed and ts == self.timestamp:
+            return self
+        self.ts = timestamp
+
         self.cells = []
         self.md_tags = []
         self.block_tag = None
@@ -155,23 +164,27 @@ class Notebook(object):
         # convert to current notebook version
         notebook = converter.convert(notebook, current_nbformat)
 
-        compiler = CachingCompiler()
+        self.compiler = CachingCompiler()
         for i, cell in enumerate(notebook.cells):
             if cell.cell_type == 'markdown' and self.md_parser:
                 self._markdown_tags(cell)
 
             elif cell.cell_type == 'code' and cell.source:
-                # translate all magic % commands to code
-                source = self.shell.input_transformer_manager.transform_cell(cell.source)
-                # need to use this cell_name so it gives a nice debug information from the notebook
-                cell_name = compiler.cache(source, i)
-                # compile the code
-                source = compile(source, cell_name, 'exec')
+                source = self._compile_code(cell.source)
                 self.cells.append({'source': cell.source, 'code': source,
                                    'tags': self._cell_tags(cell),
                                    'md_tags': tuple(self.md_tags)})
 
         return self
+
+    def _compile_code(self, source, i=0):
+        # translate all magic % commands to code
+        source = self.shell.input_transformer_manager.transform_cell(cell.source)
+        # need to use this cell_name so it gives a nice debug information from the notebook
+        cell_name = self.compiler.cache(source, i)
+        # compile the code
+        source = compile(source, cell_name, 'exec')
+        return source
 
     def _markdown_tags(self, cell):
         # tokenize markdown block
@@ -227,7 +240,7 @@ class Notebook(object):
     '''
 
     @contextmanager
-    def _setup_environment(self):
+    def environment(self):
         '''Prepare the IPython environment to run cells from the loaded notebook.'''
         with temp_chdir(self.nb_dir): # possibly change directory
             try:
@@ -236,6 +249,9 @@ class Notebook(object):
                 # orig_mod, self.shell.user_module = self.shell.user_module, self.mod
                 ast_node_interactivity, self.shell.ast_node_interactivity = (
                     self.shell.ast_node_interactivity, self.ast_node_interactivity)
+
+                if self.autorefresh:
+                    self.refresh(on_changed=True)
                 yield
             finally:
                 # swap values back
@@ -252,16 +268,16 @@ class Notebook(object):
                 plt.show()
             else:
                 plt.close()
-        return ExecutionResult(ExecutionInfo(cell['source'], False, False, False))
+        result = ExecutionResult(ExecutionInfo(cell['source'], False, False, False))
 
         # See: https://github.com/ipython/ipython/blob/b70b3f21749ca969088fdb54edcc36bb8a2267b9/IPython/core/interactiveshell.py#L2801
         # result = self.shell.run_cell(cell['source'])
-        # self.exec_count += 1
+        self.exec_count += 1
         return result
 
     def _iter_cells(self, cells, raise_exceptions=False):
         '''Run each cell yield in between each one.'''
-        with self._setup_environment():
+        with self.environment():
             for cell in cells:
                 yield cell
 
@@ -275,6 +291,9 @@ class Notebook(object):
 
         return self
 
+    def run_code(self, source):
+        compiled = self._compile_code(source)
+        self._execute_cell({'source': source, 'code': compiled})
 
     def run_all(self, blacklist=None, **kw):
         '''Run all cells (excluding those in the blacklist).'''
