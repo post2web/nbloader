@@ -3,6 +3,7 @@ import io
 import types
 # import copy
 from contextlib import contextmanager
+import datetime
 
 import mistune
 from nbformat import reader, converter, current_nbformat
@@ -150,8 +151,13 @@ class Notebook(object):
         '''Reload the notebook from file and compile cells.'''
         # only refresh if the file has updated
         ts = os.stat(self.nb_path).st_mtime
-        if on_changed and ts == self.timestamp:
-            return self
+        if on_changed:
+            dtstr = datetime.datetime.fromtimestamp(ts).strftime('%m/%d/%Y %H:%M:%S')
+            if ts == self.timestamp:
+                # print('Notebook has not changed since {}'.format(dtstr))
+                return self
+            else:
+                print('Notebook last updated at {}. Refreshing.'.format(dtstr))
         self.timestamp = ts
 
         self.cells = []
