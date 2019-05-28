@@ -98,6 +98,11 @@ class Notebook(object):
         if heading:
             print('\t' * heading[-1][0] + '({} cells.)'.format(count))
 
+    @property
+    def available_tags(self):
+        return {tag for cell in self.cells
+                for tag in cell['tags']}
+
     def var(self, *k, **kw):
         '''Helper to extract/set variables from the namespace.
 
@@ -257,8 +262,6 @@ class Notebook(object):
                 ast_node_interactivity, self.shell.ast_node_interactivity = (
                     self.shell.ast_node_interactivity, self.ast_node_interactivity)
 
-                if self.autorefresh:
-                    self.refresh(on_changed=True)
                 yield
             finally:
                 # swap values back
@@ -268,6 +271,10 @@ class Notebook(object):
 
     def _execute_cell(self, cell):
         '''Execute a single cell.'''
+        self.exec_count += 1
+
+        ## The original way
+
         exec(cell['code'], self.ns)
 
         if HAS_MATPLOTLIB:
@@ -277,11 +284,12 @@ class Notebook(object):
                 plt.close()
         result = ExecutionResult(ExecutionInfo(cell['source'], False, False, False))
 
+        ## Uses IPython.run_cell to take advantage of IPython output handling
+
         # See: https://github.com/ipython/ipython/blob/b70b3f21749ca969088fdb54edcc36bb8a2267b9/IPython/core/interactiveshell.py#L2801
         # FIXME: calling run_cell messes with the local scope of lambda functions. No outside variables are defined.
         #        I assume this is also the case for reg functions but I haven't tested.
         # result = self.shell.run_cell(cell['source'])
-        self.exec_count += 1
         return result
 
     def _iter_cells(self, cells, raise_exceptions=False):
@@ -304,12 +312,14 @@ class Notebook(object):
         compiled = self._compile_code(source)
         self._execute_cell({'source': source, 'code': compiled, 'tags': [None]})
 
+    @refresh_prior
     def run_all(self, blacklist=None, **kw):
         '''Run all cells (excluding those in the blacklist).'''
         cells = filter_blacklist(self.cells, blacklist, self.blacklist)
         self._run(cells, **kw)
         return self
 
+    @refresh_prior
     def run_tag(self, tag, strict=True, blacklist=None, **kw):
         '''Run all cells matching a tag.'''
         if isinstance(tag, str):
@@ -321,6 +331,7 @@ class Notebook(object):
         self._run(cells, **kw)
         return self
 
+    # @refresh_prior
     # def run_tags(self, tags, strict=False, blacklist=None, **kw):
     #     '''Run cells matching any of multiple tags.'''
     #     tags = [(tag,) if isinstance(tag, str) else tag for tag in tags]
@@ -331,6 +342,7 @@ class Notebook(object):
     #     self._run(cells, **kw)
     #     return self
 
+    @refresh_prior
     def run_before(self, tag, include=False, strict=True, blacklist=None, **kw):
         '''Run all cells before a tag.'''
         i = get_tag_index(self.cells, tag, end=include, strict=strict)
@@ -340,6 +352,7 @@ class Notebook(object):
             self._run(cells, **kw)
         return self
 
+    @refresh_prior
     def run_after(self, tag, include=True, strict=True, blacklist=None, **kw):
         '''Run all cells after a matching tag.'''
         i = get_tag_index(self.cells, tag, end=not include, strict=strict)

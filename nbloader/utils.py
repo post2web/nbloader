@@ -1,4 +1,5 @@
 import os
+from functools import wraps
 from contextlib import contextmanager
 
 
@@ -72,3 +73,24 @@ def filter_blacklist(cells, blacklist=None, default_blacklist=None, include=None
         cell for cell in cells
         if not any(tag in blacklist for tag in cell['tags'])
     ]
+
+
+
+def refresh_prior(func):
+    @wraps(func)
+    def inner(self, *a, **kw):
+        if self.autorefresh:
+            self.refresh(on_changed=True)
+        return func(self, *a, **kw)
+    return inner
+
+# class ObjectView:
+#     '''Wraps around another object and overrides properties that have been set on the view.'''
+#     def __init__(self, source, **kw):
+#         self.source
+#         for k, v in kw.items():
+#             setattr(self, k, v)
+#
+#     def __getattr__(self, name):
+#         return getattr(self.source, name)
+#

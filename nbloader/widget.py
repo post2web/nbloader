@@ -33,9 +33,10 @@ class NotebookWidget(Notebook):
     grid_cell_layout = w.Layout(min_width='7em', flex='1 0 auto', max_width='100%')
     cell_code_layout = w.Layout(min_width='14em', max_height='70vh', max_width='100%',
                                 flex='1 0 auto', overflow_x='auto')
-    cell_output_layout = w.Layout(min_width='14em', max_height='70vh')
+    cell_output_layout = w.Layout(min_width='14em', flex='1 0 80vw') # , max_height='70vh', overflow='auto'
     # FIXME: this causes `selected=not collapsed` for the Output display to not work. It stays collapsed.
     allow_both_code_and_output_open = False#True
+    collapse_empty = True
 
     _run_output = None
 
@@ -90,12 +91,16 @@ class NotebookWidget(Notebook):
 
                 with cell_output.capture_item('Out [*]',
                                               selected=not (collapsed or '__collapsed__' in cell['tags']),
-                                              layout=self.cell_output_layout):
+                                              layout=self.cell_output_layout) as o:
                     try:
                         yield cell
                     except GeneratorExit:
                         pass
                     cell_output.set_title(len(cell_output.children) - 1, 'Out [{}]'.format(i))
+
+                # FIXME: For some reason, outputs is always empty
+                # if self.collapse_empty and not cell_output.children[-1].outputs:
+                #     cell_output.selected_index = None
 '''
 
 IPython Widget Customizations
