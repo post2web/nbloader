@@ -1,2 +1,4 @@
 nbloader.egg-info
 dist
+.ipynb_checkpoints/
+__pycache__/
